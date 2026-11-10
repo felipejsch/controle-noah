@@ -68,35 +68,29 @@ class MainActivity : AppCompatActivity() {
     inner class TvBridge {
 
         @JavascriptInterface
-        fun connect(ipAndPort: String) {
-            executor.execute {
-                try {
-                    dadbConnection?.close()
-                    val parts = ipAndPort.trim().split(":")
-                    val host = parts[0]
-                    val port = if (parts.size > 1) parts[1].toIntOrNull() ?: 5555 else 5555
+fun connect(ipAndPort: String) {
+    executor.execute {
+        try {
+            dadbConnection?.close()
+            val parts = ipAndPort.trim().split(":")
+            val host = parts[0]
+            val port = if (parts.size > 1) parts[1].toIntOrNull() ?: 5555 else 5555
 
-                    val conn = Dadb.create(host, port, keyPair)
-                    conn.shell("echo ok")
-                    dadbConnection = conn
+            val conn = Dadb.create(host, port, keyPair)
+            conn.shell("echo ok")
+            dadbConnection = conn
 
-                    try {
-                        conn.shell("tcpip 5555")
-                    } catch (_: Exception) {}
-
-                    val fixedAddress = "$host:5555"
-
-                    runOnUiThread {
-                        webView.evaluateJavascript("window.onNativeConnectResult(true, 'Conectado!', '$fixedAddress');", null)
-                    }
-                } catch (e: Exception) {
-                    val msg = (e.message ?: "Erro ao conectar").replace("'", "")
-                    runOnUiThread {
-                        webView.evaluateJavascript("window.onNativeConnectResult(false, '$msg', null);", null)
-                    }
-                }
+            runOnUiThread {
+                webView.evaluateJavascript("window.onNativeConnectResult(true, 'Conectado!', '$host:$port');", null)
+            }
+        } catch (e: Exception) {
+            val msg = JSONObject.quote(e.message ?: "Erro ao conectar")
+            runOnUiThread {
+                webView.evaluateJavascript("window.onNativeConnectResult(false, $msg, null);", null)
             }
         }
+    }
+}
 
         @JavascriptInterface
         fun sendKey(cmd: String) {
