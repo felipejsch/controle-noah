@@ -9,15 +9,18 @@
     body { background-color: #0b111e; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; height: 100dvh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
     .view-screen { display: none; flex-direction: column; width: 100%; height: 100%; }
     .view-screen.active { display: flex; }
-    #screen-connect { justify-content: center; align-items: center; padding: 16px; }
-    .setup-card { background-color: #1e293b; border: 2px solid #334155; border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 18px; text-align: center; }
+    #screen-connect { align-items: center; padding: 16px; overflow-y: auto; }
+    .setup-card { margin: auto; background-color: #1e293b; border: 2px solid #334155; border-radius: 24px; padding: 28px 22px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
     .setup-title { font-size: 22px; font-weight: 800; color: #38bdf8; }
     .setup-desc { font-size: 14px; color: #94a3b8; line-height: 1.4; }
-    .input-ip { width: 100%; background-color: #0f172a; border: 3px solid #475569; border-radius: 16px; color: #ffffff; font-size: 22px; font-weight: 700; text-align: center; padding: 16px; outline: none; }
+    .input-ip { width: 100%; background-color: #0f172a; border: 3px solid #475569; border-radius: 16px; color: #ffffff; font-size: 20px; font-weight: 700; text-align: center; padding: 14px; outline: none; user-select: text; -webkit-user-select: text; }
     .input-ip:focus { border-color: #38bdf8; }
     .btn-connect { background-color: #0284c7; color: #ffffff; border: none; border-radius: 16px; font-size: 20px; font-weight: 800; padding: 16px; cursor: pointer; }
+    .btn-pair { background-color: #7c3aed; }
+    .btn-link { background: none; border: none; color: #64748b; font-size: 13px; font-weight: 700; text-decoration: underline; }
+    #pair-box { display: flex; flex-direction: column; gap: 14px; }
     .status-badge { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 18px; border-radius: 30px; font-weight: 700; font-size: 15px; background-color: #334155; color: #cbd5e1; }
-    .status-dot { width: 14px; height: 14px; border-radius: 50%; background-color: #ef4444; }
+    .status-dot { width: 14px; height: 14px; border-radius: 50%; background-color: #ef4444; flex-shrink: 0; }
     .status-badge.connecting .status-dot { background-color: #eab308; }
     .status-badge.connected .status-dot { background-color: #22c55e; }
     #screen-control { position: relative; }
@@ -47,9 +50,20 @@
   <div id="screen-connect" class="view-screen active">
     <div class="setup-card">
       <div class="setup-title">Controle do Noah</div>
-      <div class="setup-desc">Digite o IP da TV (Ex: 192.168.188.133:5555):</div>
-      <input type="text" id="ip-address" class="input-ip" value="192.168.188.133:5555">
+
+      <div id="pair-box">
+        <div class="setup-desc">1ª vez: na TV abra Depuração sem fio → "Parear dispositivo com código" e preencha com o que aparece lá:</div>
+        <input type="text" id="pair-ip" class="input-ip" placeholder="IP da TV" inputmode="decimal">
+        <input type="text" id="pair-port" class="input-ip" placeholder="Porta do pareamento" inputmode="numeric">
+        <input type="text" id="pair-code" class="input-ip" placeholder="Código de 6 dígitos" inputmode="numeric">
+        <button class="btn-connect btn-pair" onclick="parearTV()">PAREAR</button>
+      </div>
+
+      <div class="setup-desc">Depois de pareado, só conectar (o IP basta, a porta é automática):</div>
+      <input type="text" id="ip-address" class="input-ip" placeholder="IP da TV (ex: 192.168.188.133)">
       <button class="btn-connect" onclick="conectarTV()">CONECTAR</button>
+      <button id="btn-repair" class="btn-link" style="display:none" onclick="mostrarPareamento()">Parear de novo</button>
+
       <div id="status-badge" class="status-badge">
         <span class="status-dot"></span>
         <span id="status-text">Desconectado</span>
@@ -84,41 +98,78 @@
   </div>
 
   <script>
+    function setStatus(cls, texto) {
+      document.getElementById('status-badge').className = "status-badge " + cls;
+      document.getElementById('status-text').innerText = texto;
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem('noah_tv_ip');
-      if (saved) document.getElementById('ip-address').value = saved;
+      if (saved) {
+        document.getElementById('ip-address').value = saved.split(':')[0];
+        document.getElementById('pair-ip').value = saved.split(':')[0];
+      }
+      if (localStorage.getItem('noah_paired') === '1') {
+        document.getElementById('pair-box').style.display = 'none';
+        document.getElementById('btn-repair').style.display = 'block';
+      }
     });
 
+    function mostrarPareamento() {
+      document.getElementById('pair-box').style.display = 'flex';
+      document.getElementById('btn-repair').style.display = 'none';
+    }
+
+    function parearTV() {
+      const ip = document.getElementById('pair-ip').value.trim();
+      const port = parseInt(document.getElementById('pair-port').value.trim(), 10);
+      const code = document.getElementById('pair-code').value.trim();
+      if (!ip || !port || !code) { setStatus('', 'Preencha IP, porta e código'); return; }
+      setStatus('connecting', 'Pareando...');
+      if (window.AndroidTV) window.AndroidTV.pair(ip, port, code);
+    }
+
+    window.onNativePairResult = function(success, msg) {
+      if (success) {
+        localStorage.setItem('noah_paired', '1');
+        localStorage.setItem('noah_tv_ip', document.getElementById('pair-ip').value.trim());
+        document.getElementById('ip-address').value = document.getElementById('pair-ip').value.trim();
+        document.getElementById('pair-box').style.display = 'none';
+        document.getElementById('btn-repair').style.display = 'block';
+        setStatus('connected', 'Pareado! Agora toque em CONECTAR');
+      } else {
+        setStatus('', 'Erro: ' + msg);
+      }
+    };
+
     function conectarTV() {
-      const input = document.getElementById('ip-address');
-      const badge = document.getElementById('status-badge');
-      const text = document.getElementById('status-text');
-      const tvIP = input.value.trim();
+      const tvIP = document.getElementById('ip-address').value.trim();
       if (!tvIP) return;
       localStorage.setItem('noah_tv_ip', tvIP);
-      badge.className = "status-badge connecting";
-      text.innerText = "Conectando...";
+      setStatus('connecting', 'Conectando...');
       if (window.AndroidTV) window.AndroidTV.connect(tvIP);
     }
 
     window.onNativeConnectResult = function(success, msg, fixedIp) {
-      const badge = document.getElementById('status-badge');
-      const text = document.getElementById('status-text');
       if (success) {
         if (fixedIp) {
           document.getElementById('ip-address').value = fixedIp;
           localStorage.setItem('noah_tv_ip', fixedIp);
         }
-        badge.className = "status-badge connected";
-        text.innerText = "Conectado!";
+        setStatus('connected', 'Conectado!');
         setTimeout(() => {
           document.getElementById('screen-connect').classList.remove('active');
           document.getElementById('screen-control').classList.add('active');
         }, 1000);
       } else {
-        badge.className = "status-badge";
-        text.innerText = "Erro: " + msg;
+        setStatus('', 'Erro: ' + msg);
       }
+    };
+
+    window.onNativeConnectionLost = function() {
+      document.getElementById('screen-control').classList.remove('active');
+      document.getElementById('screen-connect').classList.add('active');
+      setStatus('', 'Conexão perdida. Toque em CONECTAR');
     };
 
     function desconectar() {
