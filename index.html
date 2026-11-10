@@ -5,265 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Controle do Noah</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
-    }
-    body {
-      background-color: #0b111e;
-      color: #f1f5f9;
-      font-family: system-ui, -apple-system, sans-serif;
-      height: 100dvh;
-      width: 100vw;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    .view-screen {
-      display: none;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-    }
-    .view-screen.active {
-      display: flex;
-    }
-
-    /* Tela 1: Configuração do IP */
-    #screen-connect {
-      justify-content: center;
-      align-items: center;
-      padding: 24px;
-      gap: 20px;
-    }
-    .setup-card {
-      background-color: #1e293b;
-      border: 2px solid #334155;
-      border-radius: 24px;
-      padding: 32px 24px;
-      width: 100%;
-      max-width: 420px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      text-align: center;
-    }
-    .setup-title {
-      font-size: 22px;
-      font-weight: 800;
-      color: #38bdf8;
-    }
-    .setup-desc {
-      font-size: 14px;
-      color: #94a3b8;
-      line-height: 1.4;
-    }
-    .input-ip {
-      width: 100%;
-      background-color: #0f172a;
-      border: 3px solid #475569;
-      border-radius: 16px;
-      color: #ffffff;
-      font-size: 22px;
-      font-weight: 700;
-      text-align: center;
-      padding: 16px;
-      outline: none;
-    }
-    .input-ip:focus {
-      border-color: #38bdf8;
-    }
-    .btn-connect {
-      background-color: #0284c7;
-      color: #ffffff;
-      border: none;
-      border-radius: 16px;
-      font-size: 20px;
-      font-weight: 800;
-      padding: 16px;
-      cursor: pointer;
-    }
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 12px 18px;
-      border-radius: 30px;
-      font-weight: 700;
-      font-size: 15px;
-      background-color: #334155;
-      color: #cbd5e1;
-    }
-    .status-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background-color: #ef4444;
-    }
-    .status-badge.connecting .status-dot {
-      background-color: #eab308;
-    }
-    .status-badge.connected .status-dot {
-      background-color: #22c55e;
-    }
-
-    /* Tela 2: O Controle */
-    #screen-control {
-      position: relative;
-    }
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background-color: #0f172a;
-      border-bottom: 2px solid #1e293b;
-    }
-    .btn-voltar {
-      background-color: #334155;
-      color: #f87171;
-      border: 2px solid #ef4444;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 800;
-      padding: 10px 18px;
-    }
-    .mode-switch {
-      display: flex;
-      gap: 8px;
-      background-color: #1e293b;
-      padding: 4px;
-      border-radius: 12px;
-    }
-    .mode-btn {
-      background: none;
-      border: none;
-      color: #94a3b8;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 8px 12px;
-      border-radius: 8px;
-    }
-    .mode-btn.active {
-      background-color: #0284c7;
-      color: #ffffff;
-    }
-
-    /* Modo 1: D-Pad com setas reforçadas */
-    #container-dpad {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-template-rows: 1fr 1fr 1fr;
-      gap: 12px;
-      padding: 16px;
-    }
-    .pad-btn {
-      background-color: #1e293b;
-      border: 3px solid #334155;
-      border-radius: 22px;
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-size: 18px;
-      font-weight: 900;
-      cursor: pointer;
-    }
-    .pad-btn:active {
-      background-color: #38bdf8;
-      transform: scale(0.97);
-    }
-    .pad-btn svg {
-      width: 48px;
-      height: 48px;
-      stroke: #38bdf8;
-      stroke-width: 4;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    .pad-btn:active svg {
-      stroke: #ffffff;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+    body { background-color: #0b111e; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; height: 100dvh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
+    .view-screen { display: none; flex-direction: column; width: 100%; height: 100%; }
+    .view-screen.active { display: flex; }
+    #screen-connect { justify-content: center; align-items: center; padding: 16px; overflow-y: auto; }
+    .setup-card { background-color: #1e293b; border: 2px solid #334155; border-radius: 24px; padding: 24px 20px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
+    .setup-title { font-size: 22px; font-weight: 800; color: #38bdf8; }
+    .setup-desc { font-size: 13px; color: #94a3b8; line-height: 1.4; }
+    .input-ip { width: 100%; background-color: #0f172a; border: 3px solid #475569; border-radius: 14px; color: #ffffff; font-size: 20px; font-weight: 700; text-align: center; padding: 12px; outline: none; }
+    .input-ip:focus { border-color: #38bdf8; }
+    .btn-connect { background-color: #0284c7; color: #ffffff; border: none; border-radius: 14px; font-size: 18px; font-weight: 800; padding: 14px; cursor: pointer; }
+    .btn-pair-toggle { background: none; border: 1px dashed #64748b; color: #cbd5e1; border-radius: 12px; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    #pair-box { display: none; flex-direction: column; gap: 10px; background: #0f172a; padding: 14px; border-radius: 16px; border: 1px solid #334155; }
+    .status-badge { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 16px; border-radius: 30px; font-weight: 700; font-size: 14px; background-color: #334155; color: #cbd5e1; }
+    .status-dot { width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444; flex-shrink: 0; }
+    .status-badge.connecting .status-dot { background-color: #eab308; }
+    .status-badge.connected .status-dot { background-color: #22c55e; }
+    #screen-control { position: relative; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: #0f172a; border-bottom: 2px solid #1e293b; }
+    .btn-voltar { background-color: #334155; color: #f87171; border: 2px solid #ef4444; border-radius: 14px; font-size: 16px; font-weight: 800; padding: 10px 18px; }
+    .mode-switch { display: flex; gap: 8px; background-color: #1e293b; padding: 4px; border-radius: 12px; }
+    .mode-btn { background: none; border: none; color: #94a3b8; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; }
+    .mode-btn.active { background-color: #0284c7; color: #ffffff; }
+    #container-dpad { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; gap: 12px; padding: 16px; }
+    .pad-btn { background-color: #1e293b; border: 3px solid #334155; border-radius: 22px; color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 18px; font-weight: 900; }
+    .pad-btn:active { background-color: #38bdf8; transform: scale(0.97); }
+    .pad-btn svg { width: 48px; height: 48px; stroke: #38bdf8; stroke-width: 4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .pad-btn:active svg { stroke: #ffffff; }
     .btn-up { grid-column: 2; grid-row: 1; }
     .btn-left { grid-column: 1; grid-row: 2; }
-    .btn-ok {
-      grid-column: 2;
-      grid-row: 2;
-      background-color: #065f46;
-      border-color: #10b981;
-      color: #ecfdf5;
-      font-size: 26px;
-    }
-    .btn-ok:active {
-      background-color: #10b981;
-    }
+    .btn-ok { grid-column: 2; grid-row: 2; background-color: #065f46; border-color: #10b981; color: #ecfdf5; font-size: 26px; }
+    .btn-ok:active { background-color: #10b981; }
     .btn-right { grid-column: 3; grid-row: 2; }
     .btn-down { grid-column: 2; grid-row: 3; }
-
-    /* Modo 2: Touchpad com bolinha no centro */
-    #container-touchpad {
-      flex: 1;
-      display: none;
-      position: relative;
-      background-color: #0f172a;
-      margin: 16px;
-      border: 3px dashed #334155;
-      border-radius: 28px;
-      touch-action: none;
-    }
-    .touch-center-target {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #10b981 0%, #064e3b 100%);
-      border: 4px solid #34d399;
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
-      font-size: 16px;
-      font-weight: 900;
-      pointer-events: none;
-    }
-    .touch-hint {
-      position: absolute;
-      bottom: 20px;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      color: #64748b;
-      font-size: 14px;
-      font-weight: 600;
-      pointer-events: none;
-    }
+    #container-touchpad { flex: 1; display: none; position: relative; background-color: #0f172a; margin: 16px; border: 3px dashed #334155; border-radius: 28px; touch-action: none; }
+    .touch-center-target { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #10b981 0%, #064e3b 100%); border: 4px solid #34d399; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; font-size: 16px; font-weight: 900; pointer-events: none; }
+    .touch-hint { position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; color: #64748b; font-size: 14px; font-weight: 600; pointer-events: none; }
   </style>
 </head>
 <body>
 
-  <!-- TELA 1: CONEXÃO -->
   <div id="screen-connect" class="view-screen active">
     <div class="setup-card">
       <div class="setup-title">Controle do Noah</div>
-      <div class="setup-desc">Digite o IP:Porta da televisão (ex: 192.168.188.133:5555):</div>
+      <div class="setup-desc">Endereço IP:Porta da TV (Fixa 5555 após 1º pareamento):</div>
       <input type="text" id="ip-address" class="input-ip" value="192.168.188.133:5555">
-      
       <button class="btn-connect" onclick="conectarTV()">CONECTAR</button>
-      
+
+      <button class="btn-pair-toggle" onclick="togglePairBox()">Parear 1ª Vez com Código de 6 Dígitos</button>
+
+      <div id="pair-box">
+        <div class="setup-desc">Na TV, clique em "Parear com código" e digite abaixo:</div>
+        <input type="text" id="pair-ip" class="input-ip" placeholder="IP:Porta do Código (ex: 192.168.188.133:41234)" value="192.168.188.133:">
+        <input type="text" id="pair-code" class="input-ip" placeholder="Código de 6 números">
+        <button class="btn-connect" style="background-color:#10b981;" onclick="parearTV()">PAREAR AGORA</button>
+      </div>
+
       <div id="status-badge" class="status-badge">
         <span class="status-dot"></span>
         <span id="status-text">Desconectado</span>
@@ -271,7 +69,6 @@
     </div>
   </div>
 
-  <!-- TELA 2: CONTROLE -->
   <div id="screen-control" class="view-screen">
     <div class="top-bar">
       <button class="btn-voltar" onclick="enviarComando('BACK')">VOLTAR</button>
@@ -282,74 +79,79 @@
       <button class="mode-btn" style="color:#64748b" onclick="desconectar()">IP</button>
     </div>
 
-    <!-- MODO BOTÕES -->
     <div id="container-dpad">
-      <button class="pad-btn btn-up" onclick="enviarComando('UP')">
-        <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-        CIMA
-      </button>
-      <button class="pad-btn btn-left" onclick="enviarComando('LEFT')">
-        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        ESQ
-      </button>
-      <button class="pad-btn btn-ok" onclick="enviarComando('OK')">
-        OK
-      </button>
-      <button class="pad-btn btn-right" onclick="enviarComando('RIGHT')">
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        DIR
-      </button>
-      <button class="pad-btn btn-down" onclick="enviarComando('DOWN')">
-        <svg viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-        BAIXO
-      </button>
+      <button class="pad-btn btn-up" onclick="enviarComando('UP')"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>CIMA</button>
+      <button class="pad-btn btn-left" onclick="enviarComando('LEFT')"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>ESQ</button>
+      <button class="pad-btn btn-ok" onclick="enviarComando('OK')">OK</button>
+      <button class="pad-btn btn-right" onclick="enviarComando('RIGHT')"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>DIR</button>
+      <button class="pad-btn btn-down" onclick="enviarComando('DOWN')"><svg viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>BAIXO</button>
     </div>
 
-    <!-- MODO TOUCHPAD -->
     <div id="container-touchpad">
       <div class="touch-center-target">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff" style="margin-bottom:2px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        OK
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff" style="margin-bottom:2px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>OK
       </div>
       <div class="touch-hint">Deslize para mover • Toque no centro para OK</div>
     </div>
   </div>
 
   <script>
-    let tvIP = "";
-
     window.addEventListener('DOMContentLoaded', () => {
       const saved = localStorage.getItem('noah_tv_ip');
-      if (saved) {
-        document.getElementById('ip-address').value = saved;
-      }
+      if (saved) document.getElementById('ip-address').value = saved;
     });
+
+    function togglePairBox() {
+      const box = document.getElementById('pair-box');
+      box.style.display = box.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function parearTV() {
+      const pairIp = document.getElementById('pair-ip').value.trim();
+      const pairCode = document.getElementById('pair-code').value.trim();
+      const badge = document.getElementById('status-badge');
+      const text = document.getElementById('status-text');
+      if (!pairIp || !pairCode) return;
+      badge.className = "status-badge connecting";
+      text.innerText = "Pareando com a TV...";
+      if (window.AndroidTV) window.AndroidTV.pair(pairIp, pairCode);
+    }
+
+    window.onNativePairResult = function(success, msg) {
+      const badge = document.getElementById('status-badge');
+      const text = document.getElementById('status-text');
+      if (success) {
+        badge.className = "status-badge connected";
+        text.innerText = msg;
+        document.getElementById('pair-box').style.display = 'none';
+      } else {
+        badge.className = "status-badge";
+        text.innerText = "Erro Pareamento: " + msg;
+      }
+    };
 
     function conectarTV() {
       const input = document.getElementById('ip-address');
       const badge = document.getElementById('status-badge');
       const text = document.getElementById('status-text');
-      tvIP = input.value.trim();
-
+      const tvIP = input.value.trim();
       if (!tvIP) return;
       localStorage.setItem('noah_tv_ip', tvIP);
-
       badge.className = "status-badge connecting";
-      text.innerText = "Conectando (Olhe para a TV)...";
-
-      if (window.AndroidTV) {
-        window.AndroidTV.connect(tvIP);
-      } else {
-        onNativeConnectResult(false, "Use no APK Nativo");
-      }
+      text.innerText = "Conectando e fixando porta 5555...";
+      if (window.AndroidTV) window.AndroidTV.connect(tvIP);
     }
 
-    window.onNativeConnectResult = function(success, msg) {
+    window.onNativeConnectResult = function(success, msg, fixedIp) {
       const badge = document.getElementById('status-badge');
       const text = document.getElementById('status-text');
       if (success) {
+        if (fixedIp) {
+          document.getElementById('ip-address').value = fixedIp;
+          localStorage.setItem('noah_tv_ip', fixedIp);
+        }
         badge.className = "status-badge connected";
-        text.innerText = "Conectado!";
+        text.innerText = "Conectado (Porta 5555 Fixa)!";
         setTimeout(() => {
           document.getElementById('screen-connect').classList.remove('active');
           document.getElementById('screen-control').classList.add('active');
@@ -363,16 +165,11 @@
     function desconectar() {
       document.getElementById('screen-control').classList.remove('active');
       document.getElementById('screen-connect').classList.add('active');
-      const badge = document.getElementById('status-badge');
-      badge.className = "status-badge";
-      document.getElementById('status-text').innerText = "Desconectado";
     }
 
     function enviarComando(cmd) {
       if (navigator.vibrate) navigator.vibrate(35);
-      if (window.AndroidTV) {
-        window.AndroidTV.sendKey(cmd);
-      }
+      if (window.AndroidTV) window.AndroidTV.sendKey(cmd);
     }
 
     function trocarModo(modo) {
@@ -380,45 +177,29 @@
       const touch = document.getElementById('container-touchpad');
       const tabDpad = document.getElementById('tab-dpad');
       const tabTouch = document.getElementById('tab-touch');
-
       if (modo === 'dpad') {
-        dpad.style.display = 'grid';
-        touch.style.display = 'none';
-        tabDpad.classList.add('active');
-        tabTouch.classList.remove('active');
+        dpad.style.display = 'grid'; touch.style.display = 'none';
+        tabDpad.classList.add('active'); tabTouch.classList.remove('active');
       } else {
-        dpad.style.display = 'none';
-        touch.style.display = 'flex';
-        tabTouch.classList.add('active');
-        tabDpad.classList.remove('active');
+        dpad.style.display = 'none'; touch.style.display = 'flex';
+        tabTouch.classList.add('active'); tabDpad.classList.remove('active');
       }
     }
 
     const touchArea = document.getElementById('container-touchpad');
     let startX = 0, startY = 0, startTime = 0;
-
     touchArea.addEventListener('touchstart', (e) => {
-      const t = e.touches[0];
-      startX = t.clientX;
-      startY = t.clientY;
-      startTime = Date.now();
+      const t = e.touches[0]; startX = t.clientX; startY = t.clientY; startTime = Date.now();
     }, { passive: true });
-
     touchArea.addEventListener('touchend', (e) => {
       const t = e.changedTouches[0];
-      const diffX = t.clientX - startX;
-      const diffY = t.clientY - startY;
+      const diffX = t.clientX - startX; const diffY = t.clientY - startY;
       const dist = Math.sqrt(diffX * diffX + diffY * diffY);
       const timeDiff = Date.now() - startTime;
-
-      if (dist < 25 && timeDiff < 300) {
-        enviarComando('OK');
-      } else if (dist >= 40) {
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-          enviarComando(diffX > 0 ? 'RIGHT' : 'LEFT');
-        } else {
-          enviarComando(diffY > 0 ? 'DOWN' : 'UP');
-        }
+      if (dist < 25 && timeDiff < 300) enviarComando('OK');
+      else if (dist >= 40) {
+        if (Math.abs(diffX) > Math.abs(diffY)) enviarComando(diffX > 0 ? 'RIGHT' : 'LEFT');
+        else enviarComando(diffY > 0 ? 'DOWN' : 'UP');
       }
     }, { passive: true });
   </script>
