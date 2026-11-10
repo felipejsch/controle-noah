@@ -25,11 +25,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Mantém a tela sempre acesa e em modo imersivo
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         hideSystemUI()
 
-        // Prepara chave criptográfica persistente para a TV lembrar do celular após o 1º pareamento
         val privateKeyFile = File(filesDir, "adbkey")
         val publicKeyFile = File(filesDir, "adbkey.pub")
         if (!privateKeyFile.exists() || !publicKeyFile.exists()) {
@@ -69,6 +67,28 @@ class MainActivity : AppCompatActivity() {
     inner class TvBridge {
 
         @JavascriptInterface
+        fun pair(ipAndPort: String, code: String) {
+            executor.execute {
+                try {
+                    val parts = ipAndPort.trim().split(":")
+                    val host = parts[0]
+                    val port = if (parts.size > 1) parts[1].toIntOrNull() ?: 5555 else 5555
+
+                    Dadb.pairing(host, port, keyPair, code)
+
+                    runOnUiThread {
+                        webView.evaluateJavascript("window.onNativePairResult(true, 'Pareado com sucesso! Agora clique em Conectar.');", null)
+                    }
+                } catch (e: Exception) {
+                    val msg = (e.message ?: "Erro no pareamento").replace("'", "")
+                    runOnUiThread {
+                        webView.evaluateJavascript("window.onNativePairResult(false, '$msg');", null)
+                    }
+                }
+            }
+        }
+
+        @JavascriptInterface
         fun connect(ipAndPort: String) {
             executor.execute {
                 try {
@@ -78,17 +98,22 @@ class MainActivity : AppCompatActivity() {
                     val port = if (parts.size > 1) parts[1].toIntOrNull() ?: 5555 else 5555
 
                     val conn = Dadb.create(host, port, keyPair)
-                    // Testa a conexão executando um comando rápido
                     conn.shell("echo ok")
                     dadbConnection = conn
 
+                    try {
+                        conn.shell("tcpip 5555")
+                    } catch (_: Exception) {}
+
+                    val fixedAddress = "$host:5555"
+
                     runOnUiThread {
-                        webView.evaluateJavascript("window.onNativeConnectResult(true, 'Conectado!');", null)
+                        webView.evaluateJavascript("window.onNativeConnectResult(true, 'Conectado!', '$fixedAddress');", null)
                     }
                 } catch (e: Exception) {
                     val msg = (e.message ?: "Erro ao conectar").replace("'", "")
                     runOnUiThread {
-                        webView.evaluateJavascript("window.onNativeConnectResult(false, '$msg');", null)
+                        webView.evaluateJavascript("window.onNativeConnectResult(false, '$msg', null);", null)
                     }
                 }
             }
@@ -108,9 +133,7 @@ class MainActivity : AppCompatActivity() {
             executor.execute {
                 try {
                     dadbConnection?.shell("input keyevent $keyCode")
-                } catch (e: Exception) {
-                    // Tenta reconectar silenciosamente se cair
-                }
+                } catch (_: Exception) {}
             }
         }
     }
