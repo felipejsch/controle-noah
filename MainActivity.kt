@@ -67,28 +67,6 @@ class MainActivity : AppCompatActivity() {
     inner class TvBridge {
 
         @JavascriptInterface
-        fun pair(ipAndPort: String, code: String) {
-            executor.execute {
-                try {
-                    val parts = ipAndPort.trim().split(":")
-                    val host = parts[0]
-                    val port = if (parts.size > 1) parts[1].toIntOrNull() ?: 5555 else 5555
-
-                    Dadb.pairing(host, port, keyPair, code)
-
-                    runOnUiThread {
-                        webView.evaluateJavascript("window.onNativePairResult(true, 'Pareado com sucesso! Agora clique em Conectar.');", null)
-                    }
-                } catch (e: Exception) {
-                    val msg = (e.message ?: "Erro no pareamento").replace("'", "")
-                    runOnUiThread {
-                        webView.evaluateJavascript("window.onNativePairResult(false, '$msg');", null)
-                    }
-                }
-            }
-        }
-
-        @JavascriptInterface
         fun connect(ipAndPort: String) {
             executor.execute {
                 try {
