@@ -132,7 +132,7 @@ class MainActivity : AppCompatActivity() {
     private fun discoverConnectPort(host: String, timeoutMs: Long = 6000): Int? {
         val nsd = getSystemService(NSD_SERVICE) as NsdManager
         val latch = CountDownLatch(1)
-        @Volatile var found: Int? = null
+        val found = java.util.concurrent.atomic.AtomicInteger(-1)
 
         val disc = object : NsdManager.DiscoveryListener {
             override fun onServiceFound(s: NsdServiceInfo) {
@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity() {
                     override fun onResolveFailed(si: NsdServiceInfo, code: Int) {}
                     override fun onServiceResolved(si: NsdServiceInfo) {
                         if (si.host?.hostAddress == host) {
-                            found = si.port
+                            found.set(si.port)
                             latch.countDown()
                         }
                     }
@@ -156,7 +156,7 @@ class MainActivity : AppCompatActivity() {
         nsd.discoverServices("_adb-tls-connect._tcp", NsdManager.PROTOCOL_DNS_SD, disc)
         latch.await(timeoutMs, TimeUnit.MILLISECONDS)
         try { nsd.stopServiceDiscovery(disc) } catch (_: Exception) {}
-        return found
+        return found.get().takeIf { it >= 0 }
     }
 
     inner class TvBridge {
