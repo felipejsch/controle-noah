@@ -136,7 +136,7 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-        /** Descobre a porta de conexão atual da TV via mDNS. */
+    /** Descobre a porta de conexão atual da TV via mDNS. */
     private fun discoverConnectPort(host: String, timeoutMs: Long = 6000): Int? {
         val nsd = getSystemService(NSD_SERVICE) as NsdManager
         val latch = CountDownLatch(1)
@@ -181,9 +181,25 @@ class MainActivity : AppCompatActivity() {
         }
         return m
     }
+
     inner class TvBridge {
 
-                @JavascriptInterface
+        @JavascriptInterface
+        fun pair(host: String, port: Int, code: String) {
+            executor.execute {
+                try {
+                    val m = NoahAdbManager(keyDir())
+                    val r: Any? = m.pair(host.trim(), port, code.trim())
+                    if (r == false) throw Exception("Código ou porta incorretos.")
+                    try { m.close() } catch (_: Throwable) {}
+                    js("window.onNativePairResult(true, 'Pareado!');")
+                } catch (e: Throwable) {
+                    js("window.onNativePairResult(false, ${JSONObject.quote(errMsg(e))});")
+                }
+            }
+        }
+
+        @JavascriptInterface
         fun connect(ipAndPort: String) {
             executor.execute {
                 try {
@@ -224,34 +240,8 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
         @JavascriptInterface
-        fun connect(ipAndPort: String) {
-            executor.execute {
-                try {
-                    try { adb?.close() } catch (_: Throwable) {}
-                    adb = null
-
-                    val parts = ipAndPort.trim().split(":")
-                    val host = parts[0]
-                    val port = parts.getOrNull(1)?.toIntOrNull()
-                        ?: discoverConnectPort(host)
-                        ?: throw Exception("Não achei a TV. Ligue a Depuração sem fio e confira o IP.")
-
-                    val m = NoahAdbManager(keyDir())
-                    val r: Any? = m.connect(host, port)
-                    if (r == false) throw Exception("A TV recusou a conexão.")
-                    adb = m
-                    lastHost = host
-                    lastPort = port
-
-                    js("window.onNativeConnectResult(true, 'Conectado!', '$host');")
-                } catch (e: Throwable) {
-                    js("window.onNativeConnectResult(false, ${JSONObject.quote(errMsg(e))}, null);")
-                }
-            }
-        }
-
-                @JavascriptInterface
         fun sendKey(cmd: String) {
             val keyCode = when (cmd.uppercase()) {
                 "UP" -> 19
