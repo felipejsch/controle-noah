@@ -88,14 +88,17 @@ jobs:
           }
           EOF
 
-      - name: Gerar icone do app
+           - name: Gerar icone do app
         run: |
           SRC="Controle_remoto_do_Noah.png"
           if [ ! -f "$SRC" ]; then echo "ERRO: envie o arquivo $SRC para a raiz do repositorio"; exit 1; fi
-          IM=$(command -v magick || command -v convert)
+          sudo apt-get update -y
+          sudo apt-get install -y imagemagick
+          IM=$(command -v magick || command -v convert || true)
+          if [ -z "$IM" ]; then echo "ERRO: ImageMagick nao foi encontrado"; exit 1; fi
           RES=app/src/main/res
           $IM -size 1254x1254 xc:none -fill white -draw "roundrectangle 0,0 1253,1253 260,260" /tmp/mask.png
-          $IM "$SRC" /tmp/mask.png -alpha off -compose copy_opacity -composite /tmp/round.png
+          $IM "$SRC" -alpha set /tmp/mask.png -compose DstIn -composite /tmp/round.png
           for spec in mdpi:108:78 hdpi:162:117 xhdpi:216:156 xxhdpi:324:234 xxxhdpi:432:312; do
             IFS=: read d canvas art <<< "$spec"
             mkdir -p $RES/mipmap-$d
