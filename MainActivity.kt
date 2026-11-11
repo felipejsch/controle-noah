@@ -79,6 +79,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private val executor = Executors.newSingleThreadExecutor()
     private var adb: NoahAdbManager? = null
+    private var lastHost: String? = null
+    private var lastPort: Int = 0
+
+    private fun runKey(m: NoahAdbManager, keyCode: Int) {
+        val stream = m.openStream("shell:input keyevent $keyCode")
+        try { stream.openInputStream().readBytes() } catch (_: Throwable) {}
+        try { stream.close() } catch (_: Throwable) {}
+    }
 
     private fun keyDir() = File(filesDir, "adb_keys")
 
@@ -193,6 +201,8 @@ class MainActivity : AppCompatActivity() {
                     val r: Any? = m.connect(host, port)
                     if (r == false) throw Exception("A TV recusou a conexão.")
                     adb = m
+                    lastHost = host
+                    lastPort = port
 
                     js("window.onNativeConnectResult(true, 'Conectado!', '$host');")
                 } catch (e: Throwable) {
@@ -201,7 +211,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        @JavascriptInterface
+                @JavascriptInterface
         fun sendKey(cmd: String) {
             val keyCode = when (cmd.uppercase()) {
                 "UP" -> 19
@@ -215,16 +225,21 @@ class MainActivity : AppCompatActivity() {
             executor.execute {
                 val m = adb ?: return@execute
                 try {
-                    val stream = m.openStream("shell:input keyevent $keyCode")
+                    runKey(m, keyCode)
+                } catch (e1: Throwable) {
                     try {
-                        stream.openInputStream().readBytes()   // espera o comando terminar
-                    } finally {
-                        stream.close()
+                        val h = lastHost ?: throw e1
+                        try { m.close() } catch (_: Throwable) {}
+                        val p = discoverConnectPort(h) ?: lastPort
+                        val m2 = NoahAdbManager(keyDir())
+                        val r: Any? = m2.connect(h, p)
+                        if (r == false) throw e1
+                        adb = m2
+                        lastPort = p
+                        runKey(m2, keyCode)
+                    } catch (e2: Throwable) {
+                        js("window.onNativeConnectionLost(${JSONObject.quote(errMsg(e2))});")
                     }
-                } catch (e: Throwable) {
-                    js("window.onNativeConnectionLost && window.onNativeConnectionLost();")
                 }
             }
         }
-    }
-}
