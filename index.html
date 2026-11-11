@@ -41,8 +41,8 @@
     .btn-down { grid-column: 2; grid-row: 3; }
     .btn-voltar { grid-column: 1; grid-row: 3; align-self: center; justify-self: center; width: 80%; height: 56%; background-color: #f1f5f9; border: 3px solid #cbd5e1; border-radius: 18px; color: #0f172a; font-size: 20px; font-weight: 900; }
     .btn-voltar:active { background-color: #94a3b8; transform: scale(0.97); }
-    .btn-voltar-touch { display: none; margin: 0 16px 16px; height: 56px; background-color: #f1f5f9; border: 3px solid #cbd5e1; border-radius: 18px; color: #0f172a; font-size: 20px; font-weight: 900; }
-    .btn-voltar-touch:active { background-color: #94a3b8; }
+    .btn-voltar-touch { display: none; margin: 0 16px 16px; height: 56px; background-color: #7c3aed; border: 3px solid #a78bfa; border-radius: 18px; color: #ffffff; font-size: 20px; font-weight: 900; }
+    .btn-voltar-touch:active { background-color: #6d28d9; }
     #container-touchpad { flex: 1; display: none; position: relative; background-color: #0f172a; margin: 16px; border: 3px dashed #334155; border-radius: 28px; touch-action: none; }
     .touch-center-target { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #10b981 0%, #064e3b 100%); border: 4px solid #34d399; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; font-size: 16px; font-weight: 900; pointer-events: none; }
     .touch-hint { position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; color: #64748b; font-size: 14px; font-weight: 600; pointer-events: none; }
@@ -101,21 +101,23 @@
     <button id="btn-voltar-touch" class="btn-voltar-touch" onclick="enviarComando('BACK')">VOLTAR</button>
   </div>
 
-  <script>
+    <script>
     function setStatus(cls, texto) {
       document.getElementById('status-badge').className = "status-badge " + cls;
       document.getElementById('status-text').innerText = texto;
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      const saved = localStorage.getItem('noah_tv_ip');
+      const saved = localStorage.getItem('noah_tv_ip');   // pode ser IP ou IP:PORTA
       if (saved) {
-        document.getElementById('ip-address').value = saved.split(':')[0];
+        document.getElementById('ip-address').value = saved;
         document.getElementById('pair-ip').value = saved.split(':')[0];
       }
-      if (localStorage.getItem('noah_paired') === '1') {
+      const paired = localStorage.getItem('noah_paired') === '1';
+      if (paired) {
         document.getElementById('pair-box').style.display = 'none';
         document.getElementById('btn-repair').style.display = 'block';
+        if (saved) setTimeout(conectarTV, 500);   // conecta sozinho ao abrir
       }
     });
 
@@ -135,12 +137,14 @@
 
     window.onNativePairResult = function(success, msg) {
       if (success) {
+        const ip = document.getElementById('pair-ip').value.trim();
         localStorage.setItem('noah_paired', '1');
-        localStorage.setItem('noah_tv_ip', document.getElementById('pair-ip').value.trim());
-        document.getElementById('ip-address').value = document.getElementById('pair-ip').value.trim();
+        localStorage.setItem('noah_tv_ip', ip);
+        document.getElementById('ip-address').value = ip;
         document.getElementById('pair-box').style.display = 'none';
         document.getElementById('btn-repair').style.display = 'block';
-        setStatus('connected', 'Pareado! Agora toque em CONECTAR');
+        setStatus('connected', 'Pareado! Conectando...');
+        setTimeout(conectarTV, 800);
       } else {
         setStatus('', 'Erro: ' + msg);
       }
@@ -157,14 +161,14 @@
     window.onNativeConnectResult = function(success, msg, fixedIp) {
       if (success) {
         if (fixedIp) {
-          document.getElementById('ip-address').value = fixedIp;
+          document.getElementById('ip-address').value = fixedIp;   // IP:PORTA que funcionou
           localStorage.setItem('noah_tv_ip', fixedIp);
         }
         setStatus('connected', 'Conectado!');
         setTimeout(() => {
           document.getElementById('screen-connect').classList.remove('active');
           document.getElementById('screen-control').classList.add('active');
-        }, 1000);
+        }, 600);
       } else {
         setStatus('', 'Erro: ' + msg);
       }
@@ -217,6 +221,6 @@
         else enviarComando(diffY > 0 ? 'DOWN' : 'UP');
       }
     }, { passive: true });
-  </script>
+   </script>
 </body>
 </html>
