@@ -136,11 +136,12 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    /** Descobre a porta de conexão atual da TV (ela muda) via mDNS. */
+        /** Descobre a porta de conexão atual da TV via mDNS. */
     private fun discoverConnectPort(host: String, timeoutMs: Long = 6000): Int? {
         val nsd = getSystemService(NSD_SERVICE) as NsdManager
         val latch = CountDownLatch(1)
         val found = java.util.concurrent.atomic.AtomicInteger(-1)
+        val others = java.util.concurrent.CopyOnWriteArrayList<Int>()
 
         val disc = object : NsdManager.DiscoveryListener {
             override fun onServiceFound(s: NsdServiceInfo) {
@@ -148,9 +149,12 @@ class MainActivity : AppCompatActivity() {
                 nsd.resolveService(s, object : NsdManager.ResolveListener {
                     override fun onResolveFailed(si: NsdServiceInfo, code: Int) {}
                     override fun onServiceResolved(si: NsdServiceInfo) {
-                        if (si.host?.hostAddress == host) {
+                        val addr = si.host?.hostAddress?.substringBefore('%')
+                        if (addr == host) {
                             found.set(si.port)
                             latch.countDown()
+                        } else {
+                            others.add(si.port)
                         }
                     }
                 })
@@ -164,26 +168,62 @@ class MainActivity : AppCompatActivity() {
         nsd.discoverServices("_adb-tls-connect._tcp", NsdManager.PROTOCOL_DNS_SD, disc)
         latch.await(timeoutMs, TimeUnit.MILLISECONDS)
         try { nsd.stopServiceDiscovery(disc) } catch (_: Exception) {}
-        return found.get().takeIf { it >= 0 }
+        // se o endereço veio em outro formato (ex.: IPv6) e só há 1 serviço na rede, usa ele
+        return found.get().takeIf { it >= 0 } ?: others.distinct().singleOrNull()
     }
 
+    private fun openConn(host: String, port: Int): NoahAdbManager {
+        val m = NoahAdbManager(keyDir())
+        val r: Any? = m.connect(host, port)
+        if (r == false) {
+            try { m.close() } catch (_: Throwable) {}
+            throw Exception("A TV recusou a conexão.")
+        }
+        return m
+    }
     inner class TvBridge {
 
-        @JavascriptInterface
-        fun pair(host: String, port: Int, code: String) {
+                @JavascriptInterface
+        fun connect(ipAndPort: String) {
             executor.execute {
                 try {
-                    val m = NoahAdbManager(keyDir())
-                    val r: Any? = m.pair(host.trim(), port, code.trim())
-                    if (r == false) throw Exception("Código ou porta incorretos.")
-                    try { m.close() } catch (_: Throwable) {}
-                    js("window.onNativePairResult(true, 'Pareado!');")
+                    try { adb?.close() } catch (_: Throwable) {}
+                    adb = null
+
+                    val parts = ipAndPort.trim().split(":")
+                    val host = parts[0]
+                    val given = parts.getOrNull(1)?.toIntOrNull()
+
+                    var m: NoahAdbManager? = null
+                    var port = given ?: 0
+                    var err: Throwable? = null
+
+                    // 1) tenta a porta guardada/digitada
+                    if (given != null) {
+                        try { m = openConn(host, given) } catch (e: Throwable) { err = e }
+                    }
+                    // 2) se falhar, tenta descobrir a porta atual
+                    if (m == null) {
+                        val found = discoverConnectPort(host)
+                        if (found != null && found != given) {
+                            try { m = openConn(host, found); port = found } catch (e: Throwable) { err = e }
+                        }
+                    }
+                    if (m == null) {
+                        val e0 = err
+                        if (e0 != null && e0.javaClass.simpleName.contains("Pairing")) throw e0
+                        throw Exception("Não consegui conectar. Veja a porta na tela principal de Depuração por Wi-Fi da TV e digite assim: IP:PORTA (ex: 192.168.188.133:43753)")
+                    }
+
+                    adb = m
+                    lastHost = host
+                    lastPort = port
+                    js("window.onNativeConnectResult(true, 'Conectado!', '$host:$port');")
                 } catch (e: Throwable) {
-                    js("window.onNativePairResult(false, ${JSONObject.quote(errMsg(e))});")
+                    js("window.onNativeConnectResult(false, ${JSONObject.quote(errMsg(e))}, null);")
                 }
             }
         }
-
         @JavascriptInterface
         fun connect(ipAndPort: String) {
             executor.execute {
