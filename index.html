@@ -25,7 +25,6 @@
     .status-badge.connected .status-dot { background-color: #22c55e; }
     #screen-control { position: relative; }
     .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: #0f172a; border-bottom: 2px solid #1e293b; }
-    .btn-voltar { background-color: #334155; color: #f87171; border: 2px solid #ef4444; border-radius: 14px; font-size: 16px; font-weight: 800; padding: 10px 18px; }
     .mode-switch { display: flex; gap: 8px; background-color: #1e293b; padding: 4px; border-radius: 12px; }
     .mode-btn { background: none; border: none; color: #94a3b8; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; }
     .mode-btn.active { background-color: #0284c7; color: #ffffff; }
@@ -40,6 +39,10 @@
     .btn-ok:active { background-color: #10b981; }
     .btn-right { grid-column: 3; grid-row: 2; }
     .btn-down { grid-column: 2; grid-row: 3; }
+    .btn-voltar { grid-column: 1; grid-row: 3; align-self: center; justify-self: center; width: 80%; height: 56%; background-color: #f1f5f9; border: 3px solid #cbd5e1; border-radius: 18px; color: #0f172a; font-size: 20px; font-weight: 900; }
+    .btn-voltar:active { background-color: #94a3b8; transform: scale(0.97); }
+    .btn-voltar-touch { display: none; margin: 0 16px 16px; height: 56px; background-color: #f1f5f9; border: 3px solid #cbd5e1; border-radius: 18px; color: #0f172a; font-size: 20px; font-weight: 900; }
+    .btn-voltar-touch:active { background-color: #94a3b8; }
     #container-touchpad { flex: 1; display: none; position: relative; background-color: #0f172a; margin: 16px; border: 3px dashed #334155; border-radius: 28px; touch-action: none; }
     .touch-center-target { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #10b981 0%, #064e3b 100%); border: 4px solid #34d399; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; font-size: 16px; font-weight: 900; pointer-events: none; }
     .touch-hint { position: absolute; bottom: 20px; left: 0; width: 100%; text-align: center; color: #64748b; font-size: 14px; font-weight: 600; pointer-events: none; }
@@ -73,7 +76,6 @@
 
   <div id="screen-control" class="view-screen">
     <div class="top-bar">
-      <button class="btn-voltar" onclick="enviarComando('BACK')">VOLTAR</button>
       <div class="mode-switch">
         <button id="tab-dpad" class="mode-btn active" onclick="trocarModo('dpad')">Botões</button>
         <button id="tab-touch" class="mode-btn" onclick="trocarModo('touch')">Touchpad</button>
@@ -87,6 +89,7 @@
       <button class="pad-btn btn-ok" onclick="enviarComando('OK')">OK</button>
       <button class="pad-btn btn-right" onclick="enviarComando('RIGHT')"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>DIR</button>
       <button class="pad-btn btn-down" onclick="enviarComando('DOWN')"><svg viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>BAIXO</button>
+      <button class="btn-voltar" onclick="enviarComando('BACK')">VOLTAR</button>
     </div>
 
     <div id="container-touchpad">
@@ -95,6 +98,7 @@
       </div>
       <div class="touch-hint">Deslize para mover • Toque no centro para OK</div>
     </div>
+    <button id="btn-voltar-touch" class="btn-voltar-touch" onclick="enviarComando('BACK')">VOLTAR</button>
   </div>
 
   <script>
@@ -166,10 +170,10 @@
       }
     };
 
-    window.onNativeConnectionLost = function() {
+    window.onNativeConnectionLost = function(msg) {
       document.getElementById('screen-control').classList.remove('active');
       document.getElementById('screen-connect').classList.add('active');
-      setStatus('', 'Conexão perdida. Toque em CONECTAR');
+      setStatus('', 'Conexão perdida' + (msg ? ': ' + msg : '') + '. Toque em CONECTAR');
     };
 
     function desconectar() {
@@ -187,11 +191,12 @@
       const touch = document.getElementById('container-touchpad');
       const tabDpad = document.getElementById('tab-dpad');
       const tabTouch = document.getElementById('tab-touch');
+      const voltarTouch = document.getElementById('btn-voltar-touch');
       if (modo === 'dpad') {
-        dpad.style.display = 'grid'; touch.style.display = 'none';
+        dpad.style.display = 'grid'; touch.style.display = 'none'; voltarTouch.style.display = 'none';
         tabDpad.classList.add('active'); tabTouch.classList.remove('active');
       } else {
-        dpad.style.display = 'none'; touch.style.display = 'flex';
+        dpad.style.display = 'none'; touch.style.display = 'flex'; voltarTouch.style.display = 'block';
         tabTouch.classList.add('active'); tabDpad.classList.remove('active');
       }
     }
