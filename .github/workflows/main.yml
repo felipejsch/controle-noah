@@ -88,6 +88,34 @@ jobs:
           }
           EOF
 
+      - name: Gerar icone do app
+        run: |
+          SRC="Controle_remoto_do_Noah.png"
+          if [ ! -f "$SRC" ]; then echo "ERRO: envie o arquivo $SRC para a raiz do repositorio"; exit 1; fi
+          IM=$(command -v magick || command -v convert)
+          RES=app/src/main/res
+          $IM -size 1254x1254 xc:none -fill white -draw "roundrectangle 0,0 1253,1253 260,260" /tmp/mask.png
+          $IM "$SRC" /tmp/mask.png -alpha off -compose copy_opacity -composite /tmp/round.png
+          for spec in mdpi:108:78 hdpi:162:117 xhdpi:216:156 xxhdpi:324:234 xxxhdpi:432:312; do
+            IFS=: read d canvas art <<< "$spec"
+            mkdir -p $RES/mipmap-$d
+            $IM /tmp/round.png -resize ${art}x${art} -background none -gravity center -extent ${canvas}x${canvas} $RES/mipmap-$d/ic_launcher_foreground.png
+          done
+          mkdir -p $RES/mipmap-anydpi-v26 $RES/values
+          cat > $RES/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background"/>
+              <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+          </adaptive-icon>
+          EOF
+          cat > $RES/values/ic_launcher_background.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="ic_launcher_background">#0F8CE9</color>
+          </resources>
+          EOF
+
       - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
