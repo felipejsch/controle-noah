@@ -88,7 +88,7 @@ jobs:
           }
           EOF
 
-           - name: Gerar icone do app
+      - name: Gerar icone do app
         run: |
           SRC="Controle_remoto_do_Noah.png"
           if [ ! -f "$SRC" ]; then echo "ERRO: envie o arquivo $SRC para a raiz do repositorio"; exit 1; fi
